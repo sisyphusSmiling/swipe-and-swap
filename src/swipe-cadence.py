@@ -5,13 +5,15 @@ import requests
 import argparse
 from urllib.parse import urlparse
 
-# Parse the GitHub repository URL to extract the owner and repository name
+# Parse the GitHub repository, target branch, and destination directory from the given arguments
 parser = argparse.ArgumentParser(description="Copy contracts, scripts, and transactions from a GitHub repository")
 parser.add_argument("--repo", help="owner/name of the Cadence repo")
 parser.add_argument("--branch", help="Name of the branch to clone (default is main)", default="main")
+parser.add_argument("--dest-dir", help="Name of the directory to save to", default="cadence/")
 args = parser.parse_args()
 parsed_url = urlparse(args.repo)
 branch = args.branch
+dest_dir = args.dest_dir
 owner, repo_name = parsed_url.path.strip('/').split('/')
 
 # Construct the URL for the repository's contents API
@@ -20,9 +22,10 @@ api_url = f"https://api.github.com/repos/{owner}/{repo_name}/contents?ref={branc
 # Define the directories to copy
 dirs_to_copy = ["contracts", "scripts", "transactions"]
 
-# Create the cadence directory if it does not already exist
-cadence_dir = os.path.join(os.getcwd(), "cadence")
-os.makedirs(cadence_dir, exist_ok=True)
+# Overwrite the existing directory if it exists
+if os.path.exists(dest_dir):
+    shutil.rmtree(dest_dir)
+os.makedirs(dest_dir)
 
 # Loop through each directory and copy its contents to the cadence directory
 for directory in dirs_to_copy:
@@ -38,7 +41,6 @@ for directory in dirs_to_copy:
 
     # Create the directory in the cadence directory
     dest_dir = os.path.join(cadence_dir, directory)
-    print(f'Copying {directory} to {dest_dir}')
     if os.path.exists(dest_dir):
         shutil.rmtree(dest_dir)
     os.makedirs(dest_dir)
